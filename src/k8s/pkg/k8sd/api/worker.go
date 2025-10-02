@@ -74,9 +74,8 @@ func (e *Endpoints) postWorkerInfo(s state.State, r *http.Request) response.Resp
 		return response.InternalError(fmt.Errorf("failed to retrieve list of known kube-apiserver endpoints: %w", err))
 	}
 
-	workerToken := r.Header.Get("Worker-Token")
 	if err := s.Database().Transaction(r.Context(), func(ctx context.Context, tx *sql.Tx) error {
-		return database.DeleteWorkerNodeToken(ctx, tx, workerToken)
+		return database.DeleteWorkerNodeToken(ctx, tx, workerName)
 	}); err != nil {
 		return response.InternalError(fmt.Errorf("delete worker node token transaction failed: %w", err))
 	}
