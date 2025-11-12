@@ -9,6 +9,7 @@ import (
 	"time"
 
 	apiv1 "github.com/canonical/k8s-snap-api/api/v1"
+	"github.com/canonical/k8s/pkg/client/etcd"
 	"github.com/canonical/k8s/pkg/k8sd/api"
 	"github.com/canonical/k8s/pkg/k8sd/controllers"
 	"github.com/canonical/k8s/pkg/k8sd/controllers/upgrade"
@@ -62,6 +63,7 @@ type App struct {
 	cluster *microcluster.MicroCluster
 	client  *client.Client
 	snap    snap.Snap
+	db      database.Database
 
 	// profilingAddress
 	profilingAddress string
@@ -105,12 +107,16 @@ func New(cfg Config) (*App, error) {
 		return nil, fmt.Errorf("failed to create microcluster local client: %w", err)
 	}
 
+	etcdClient, err := etcd.NewClient(cfg.Snap.EtcdPKIDir(), []string{"https://localhost:2379"})
+	db := database.NewEtcd(etcdClient.Client, "/k8sd")
+
 	app := &App{
 		config:           cfg,
 		cluster:          cluster,
 		client:           client,
 		snap:             cfg.Snap,
 		profilingAddress: cfg.PprofAddress,
+		db:               db,
 	}
 	app.readyWg.Add(1)
 
